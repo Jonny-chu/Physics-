@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraviLab: Interactive Physics Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            950: '#020617'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
+        canvas { touch-action: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-white tracking-tight flex items-center gap-2">
+                    GraviLab <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-medium border border-indigo-500/30">Interactive Studio</span>
+                </h1>
+                <p class="text-xs text-slate-400">Explore gravity, free fall, and orbital mechanics in real-time</p>
+            </div>
+        </div>
+
+        <!-- Module Switcher Tabs -->
+        <nav class="flex items-center bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+            <button onclick="switchModule(1)" id="tab-btn-1" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                1. Universal Gravitation
+            </button>
+            <button onclick="switchModule(2)" id="tab-btn-2" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                2. Free Fall & Vacuum
+            </button>
+            <button onclick="switchModule(3)" id="tab-btn-3" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+                3. Orbital Sandbox
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="flex-1 flex flex-col p-4 lg:p-6 max-w-7xl mx-auto w-full gap-6">
+
+        <!-- ================= MODULE 1: UNIVERSAL GRAVITATION ================= -->
+        <section id="module-1" class="flex flex-col gap-6">
+            <!-- Educational Header Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="space-y-1">
+                    <span class="text-xs uppercase font-bold tracking-wider text-indigo-400">Newton's Law of Gravitation</span>
+                    <h2 class="text-xl font-bold text-white">Inverse-Square Law Explorer</h2>
+                    <p class="text-sm text-slate-300 max-w-2xl">Every particle attracts every other particle with force proportional to the product of their masses and inversely proportional to the square of the distance between them.</p>
+                </div>
+                <div class="bg-slate-950 px-5 py-3 rounded-xl border border-indigo-500/30 flex items-center gap-3">
+                    <div class="text-xs text-slate-400">Formula:</div>
+                    <div class="font-mono text-indigo-300 font-bold text-base">F = G &middot; (m&sub1; &middot; m&sub2;) / r&sup2;</div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Canvas Viewport -->
+                <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col relative overflow-hidden shadow-2xl min-h-[450px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-medium text-slate-400 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Interactive Visual Force Field
+                        </span>
+                        <div class="text-xs font-mono text-indigo-400 bg-indigo-950/60 px-3 py-1 rounded-full border border-indigo-500/30" id="m1-force-readout">
+                            Force (F) = 0.00 N
+                        </div>
+                    </div>
+                    <div class="flex-1 relative flex items-center justify-center bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden">
+                        <canvas id="canvas-m1" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+                        <div class="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-800 text-xs text-slate-400 space-y-1 pointer-events-none">
+                            <div>💡 <span class="text-slate-200 font-medium">Tip:</span> Drag masses directly on canvas or use sliders below.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls & Stats Panel -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-2xl space-y-6">
+                    <div class="space-y-5">
+                        <h3 class="text-sm font-semibold text-slate-200 border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <span>Parameters & Sliders</span>
+                            <button onclick="resetModule1()" class="text-xs text-indigo-400 hover:text-indigo-300 underline font-normal">Reset Defaults</button>
+                        </h3>
+
+                        <!-- Mass 1 Control -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-300 font-medium flex items-center gap-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> Mass 1 (m&sub1;)
+                                </span>
+                                <span id="m1-val-label" class="font-mono font-bold text-blue-400">5.00 &times; 10&sup1;&sup2; kg</span>
+                            </div>
+                            <input type="range" id="slider-m1" min="1" max="100" step="0.5" value="50" class="w-full accent-blue-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Mass 2 Control -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-300 font-medium flex items-center gap-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Mass 2 (m&sub2;)
+                                </span>
+                                <span id="m2-val-label" class="font-mono font-bold text-rose-400">5.00 &times; 10&sup1;&sup2; kg</span>
+                            </div>
+                            <input type="range" id="slider-m2" min="1" max="100" step="0.5" value="50" class="w-full accent-rose-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Distance Control -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-300 font-medium flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg> Distance (r)
+                                </span>
+                                <span id="dist-val-label" class="font-mono font-bold text-amber-400">10.0 m</span>
+                            </div>
+                            <input type="range" id="slider-dist" min="2" max="30" step="0.1" value="10" class="w-full accent-amber-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation Breakdown Card -->
+                    <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2.5">
+                        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Real-Time Calculation</div>
+                        <div class="space-y-1.5 text-xs font-mono">
+                            <div class="flex justify-between text-slate-300">
+                                <span>Gravitational Constant (G):</span>
+                                <span class="text-slate-400">6.674 &times; 10&sup-;&sup1;&sup1;</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Product (m&sub1; &times; m&sub2;):</span>
+                                <span id="calc-prod" class="text-indigo-300">--</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Distance Squared (r&sup2;):</span>
+                                <span id="calc-rsq" class="text-amber-300">--</span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-800 flex justify-between font-bold text-sm">
+                                <span class="text-white">Gravitational Force:</span>
+                                <span id="calc-force" class="text-emerald-400">-- N</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= MODULE 2: FREE FALL & VACUUM ================= -->
+        <section id="module-2" class="hidden flex-col gap-6">
+            <!-- Educational Header Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="space-y-1">
+                    <span class="text-xs uppercase font-bold tracking-wider text-emerald-400">Galileo's Leaning Tower Experiment</span>
+                    <h2 class="text-xl font-bold text-white">Free Fall & Air Resistance Lab</h2>
+                    <p class="text-sm text-slate-300 max-w-2xl">In a vacuum, all objects fall at the exact same rate regardless of mass. In atmosphere, air drag opposes motion proportional to surface area and velocity squared.</p>
+                </div>
+                <div class="flex items-center gap-3 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800">
+                    <span class="text-xs text-slate-400">Environment:</span>
+                    <select id="env-select" class="bg-slate-900 text-xs font-semibold text-white px-3 py-1.5 rounded-lg border border-slate-700 outline-none cursor-pointer focus:border-indigo-500">
+                        <option value="earth">Earth (g = 9.81 m/s&sup2;)</option>
+                        <option value="moon">Moon (g = 1.62 m/s&sup2;)</option>
+                        <option value="jupiter">Jupiter (g = 24.79 m/s&sup2;)</option>
+                        <option value="deepspace">Deep Space (g = 0.00 m/s&sup2;)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Drop Tower Canvas Viewport -->
+                <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col relative overflow-hidden shadow-2xl min-h-[480px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-medium text-slate-400">Drop Chamber View</span>
+                            <span id="vacuum-badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Atmosphere: ON</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="dropObject()" id="btn-drop" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Drop Object
+                            </button>
+                            <button onclick="resetDrop()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-all">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 relative flex items-center justify-center bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden">
+                        <canvas id="canvas-m2" class="w-full h-full"></canvas>
+                        <!-- Telemetry Overlay Box -->
+                        <div class="absolute top-3 left-3 bg-slate-900/90 backdrop-blur px-4 py-3 rounded-xl border border-slate-800 text-xs space-y-1.5 shadow-xl">
+                            <div class="font-bold text-slate-200 border-b border-slate-800 pb-1 mb-1 flex justify-between gap-4">
+                                <span>Live Telemetry</span>
+                                <span id="tele-status" class="text-amber-400 font-mono">Ready</span>
+                            </div>
+                            <div class="flex justify-between gap-6 font-mono">
+                                <span class="text-slate-400">Time (t):</span>
+                                <span id="tele-time" class="text-white font-semibold">0.00 s</span>
+                            </div>
+                            <div class="flex justify-between gap-6 font-mono">
+                                <span class="text-slate-400">Height (y):</span>
+                                <span id="tele-height" class="text-white font-semibold">100.0 m</span>
+                            </div>
+                            <div class="flex justify-between gap-6 font-mono">
+                                <span class="text-slate-400">Velocity (v):</span>
+                                <span id="tele-vel" class="text-indigo-400 font-semibold">0.0 m/s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drop Configuration & Graph Panel -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-2xl space-y-6">
+                    <div class="space-y-5">
+                        <h3 class="text-sm font-semibold text-slate-200 border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <span>Object & Physics Setup</span>
+                        </h3>
+
+                        <!-- Object Presets -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-400 font-medium">Select Object Preset</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setDropObject('feather')" id="obj-btn-feather" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-indigo-500/50 text-left transition-all flex items-center gap-2 group">
+                                    <span class="text-lg">🪶</span>
+                                    <div>
+                                        <div class="text-xs font-semibold text-slate-200 group-hover:text-indigo-400">Feather</div>
+                                        <div class="text-[10px] text-slate-500">Mass: 0.01 kg</div>
+                                    </div>
+                                </button>
+                                <button onclick="setDropObject('hammer')" id="obj-btn-hammer" class="p-2.5 rounded-xl border border-indigo-500 bg-indigo-950/40 text-left transition-all flex items-center gap-2 group">
+                                    <span class="text-lg">🔨</span>
+                                    <div>
+                                        <div class="text-xs font-semibold text-white">Steel Hammer</div>
+                                        <div class="text-[10px] text-indigo-300">Mass: 1.50 kg</div>
+                                    </div>
+                                </button>
+                                <button onclick="setDropObject('bowling')" id="obj-btn-bowling" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-indigo-500/50 text-left transition-all flex items-center gap-2 group">
+                                    <span class="text-lg">🎳</span>
+                                    <div>
+                                        <div class="text-xs font-semibold text-slate-200 group-hover:text-indigo-400">Bowling Ball</div>
+                                        <div class="text-[10px] text-slate-500">Mass: 5.00 kg</div>
+                                    </div>
+                                </button>
+                                <button onclick="setDropObject('astronaut')" id="obj-btn-astronaut" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-indigo-500/50 text-left transition-all flex items-center gap-2 group">
+                                    <span class="text-lg">👨‍🚀</span>
+                                    <div>
+                                        <div class="text-xs font-semibold text-slate-200 group-hover:text-indigo-400">Astronaut</div>
+                                        <div class="text-[10px] text-slate-500">Mass: 80.0 kg</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Air Resistance Toggle -->
+                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-200">Air Resistance (Atmosphere)</div>
+                                <div class="text-[10px] text-slate-400">Simulate drag force due to air particles</div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-air" checked onchange="toggleAirResistance()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Velocity vs Time Mini Graph Canvas -->
+                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-semibold text-slate-400 uppercase tracking-wider">Velocity vs Time</span>
+                            <span class="text-[10px] text-indigo-400 font-mono">v(t) graph</span>
+                        </div>
+                        <div class="h-28 w-full bg-slate-900 rounded-lg overflow-hidden relative border border-slate-800/80">
+                            <canvas id="canvas-graph" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= MODULE 3: ORBITAL MECHANICS SANDBOX ================= -->
+        <section id="module-3" class="hidden flex-col gap-6">
+            <!-- Educational Header Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="space-y-1">
+                    <span class="text-xs uppercase font-bold tracking-wider text-violet-400">Orbital Dynamics & Slingshot Physics</span>
+                    <h2 class="text-xl font-bold text-white">Central Gravity & Satellite Sandbox</h2>
+                    <p class="text-sm text-slate-300 max-w-2xl">Launch satellites into orbit around a massive central body. Balance tangential velocity and gravitational pull to create circular, elliptical, or hyperbolic trajectories.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="loadOrbitPreset('circular')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-all border border-slate-700">Circular Orbit</button>
+                    <button onclick="loadOrbitPreset('elliptical')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-all border border-slate-700">Elliptical</button>
+                    <button onclick="loadOrbitPreset('slingshot')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-all shadow-lg shadow-indigo-600/30">Slingshot</button>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Orbital Canvas Viewport -->
+                <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col relative overflow-hidden shadow-2xl min-h-[500px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-medium text-slate-400 flex items-center gap-2">
+                                <span id="orbit-sim-status" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Simulation Running
+                            </span>
+                            <span class="text-xs font-mono text-slate-500" id="satellite-count">Satellites: 1</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="toggleOrbitPlay()" id="btn-orbit-play" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg> Pause
+                            </button>
+                            <button onclick="clearOrbits()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-all">Clear All</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 relative flex items-center justify-center bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden">
+                        <canvas id="canvas-m3" class="w-full h-full cursor-crosshair"></canvas>
+                        <!-- Interactive Launch Helper Instructions -->
+                        <div class="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-800 text-xs text-slate-400 pointer-events-none space-y-0.5">
+                            <div>🪐 <span class="text-slate-200 font-medium">Click & Drag</span> on canvas to launch a new satellite with custom velocity vector.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orbital Controls Panel -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-2xl space-y-6">
+                    <div class="space-y-5">
+                        <h3 class="text-sm font-semibold text-slate-200 border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <span>Central Body & Settings</span>
+                        </h3>
+
+                        <!-- Central Body Selector -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-400 font-medium">Central Star / Body Type</label>
+                            <select id="central-body-type" onchange="changeCentralBody()" class="w-full bg-slate-950 text-xs font-semibold text-white px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none cursor-pointer focus:border-indigo-500">
+                                <option value="sun">Yellow Sun (Standard Mass)</option>
+                                <option value="giant">Red Giant (Super Massive)</option>
+                                <option value="blackhole">Black Hole (Extreme Gravity)</option>
+                            </select>
+                        </div>
+
+                        <!-- Simulation Speed -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-300 font-medium">Simulation Time Speed</span>
+                                <span id="speed-val-label" class="font-mono font-bold text-indigo-400">1.0x</span>
+                            </div>
+                            <input type="range" id="slider-speed" min="0.2" max="3" step="0.1" value="1" class="w-full accent-indigo-500 bg-slate-800 h-2 rounded-lg cursor-pointer" oninput="updateSimSpeed(this.value)">
+                        </div>
+
+                        <!-- Gravitational Slingshot Info Box -->
+                        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                            <div class="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Gravitational Assist
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                Spacecraft use gravitational slingshots to steal momentum from moving planets, boosting speed and altering trajectory without burning excess fuel.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry & Stats -->
+                    <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Active Satellites:</span>
+                            <span id="stat-sat-count" class="text-white">1</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Central Mass (M):</span>
+                            <span id="stat-mass" class="text-amber-400">1.0 &times; 10&sup3;&sup0; kg</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Gravitational Strength:</span>
+                            <span class="text-indigo-400">G = 1.0 (Scaled)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 bg-slate-900/40">
+        GraviLab Interactive Physics Studio &bull; Designed for immersive STEM learning and celestial mechanics exploration.
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // ================= GLOBAL STATE & TAB SWITCHING =================
+        let currentModule = 1;
+
+        function switchModule(modNum) {
+            currentModule = modNum;
+            for (let i = 1; i <= 3; i++) {
+                const sec = document.getElementById(`module-${i}`);
+                const btn = document.getElementById(`tab-btn-${i}`);
+                if (i === modNum) {
+                    sec.classList.remove('hidden');
+                    sec.classList.add('flex');
+                    btn.className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                } else {
+                    sec.classList.add('hidden');
+                    sec.classList.remove('flex');
+                    btn.className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+                }
+            }
+            // Trigger resize/redraw on active canvas
+            setTimeout(() => {
+                resizeCanvasM1();
+                resizeCanvasM2();
+                resizeCanvasGraph();
+                resizeCanvasM3();
+            }, 50);
+        }
+
+        // ================= MODULE 1: UNIVERSAL GRAVITATION =================
+        const canvasM1 = document.getElementById('canvas-m1');
+        const ctxM1 = canvasM1.getContext('2d');
+
+        let m1State = {
+            m1: 50, // mass 1
+            m2: 50, // mass 2
+            r: 10,  // distance units
+            x1: 0, y1: 0,
+            x2: 0, y2: 0,
+            dragging: null
+        };
+
+        function resizeCanvasM1() {
+            if (!canvasM1) return;
+            canvasM1.width = canvasM1.parentElement.clientWidth;
+            canvasM1.height = canvasM1.parentElement.clientHeight || 450;
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvasM1();
+            resizeCanvasM2();
+            resizeCanvasGraph();
+            resizeCanvasM3();
+        });
+
+        // Sliders M1
+        const sliderM1 = document.getElementById('slider-m1');
+        const sliderM2 = document.getElementById('slider-m2');
+        const sliderDist = document.getElementById('slider-dist');
+
+        function updateM1FromUI() {
+            m1State.m1 = parseFloat(sliderM1.value);
+            m1State.m2 = parseFloat(sliderM2.value);
+            m1State.r = parseFloat(sliderDist.value);
+
+            document.getElementById('m1-val-label').innerText = (m1State.m1 * 1e11).toExponential(2) + ' kg';
+            document.getElementById('m2-val-label').innerText = (m1State.m2 * 1e11).toExponential(2) + ' kg';
+            document.getElementById('dist-val-label').innerText = m1State.r.toFixed(1) + ' m';
+
+            // Calculations
+            // F = G * m1 * m2 / r^2 (Using scale factor G = 6.674 for visual impact)
+            const G = 6.674;
+            const product = (m1State.m1 * 1e11) * (m1State.m2 * 1e11);
+            const rsq = m1State.r * m1State.r;
+            const force = (G * product * 1e-11) / rsq; // scaled for readability
+
+            document.getElementById('calc-prod').innerText = product.toExponential(2);
+            document.getElementById('calc-rsq').innerText = rsq.toFixed(1) + ' m&sup2;';
+            document.getElementById('calc-force').innerText = force.toExponential(3) + ' N';
+            document.getElementById('m1-force-readout').innerText = 'Force (F) = ' + force.toExponential(3) + ' N';
+        }
+
+        [sliderM1, sliderM2, sliderDist].forEach(slider => {
+            slider.addEventListener('input', updateM1FromUI);
+        });
+
+        function resetModule1() {
+            sliderM1.value = 50;
+            sliderM2.value = 50;
+            sliderDist.value = 10;
+            updateM1FromUI();
+        }
+
+        function drawModule1() {
+            if (currentModule !== 1) return;
+            ctxM1.clearRect(0, 0, canvasM1.width, canvasM1.height);
+
+            const cx = canvasM1.width / 2;
+            const cy = canvasM1.height / 2;
+
+            // Distance r mapped to pixels (e.g. 1 meter = 15 pixels)
+            const pixelDist = m1State.r * 18;
+            m1State.x1 = cx - pixelDist / 2;
+            m1State.y1 = cy;
+            m1State.x2 = cx + pixelDist / 2;
+            m1State.y2 = cy;
+
+            const radius1 = Math.max(16, Math.min(45, Math.sqrt(m1State.m1) * 4));
+            const radius2 = Math.max(16, Math.min(45, Math.sqrt(m1State.m2) * 4));
+
+            // Draw grid lines & background aesthetic
+            ctxM1.strokeStyle = 'rgba(51, 65, 85, 0.2)';
+            ctxM1.lineWidth = 1;
+            for (let x = 0; x < canvasM1.width; x += 40) {
+                ctxM1.beginPath(); ctxM1.moveTo(x, 0); ctxM1.lineTo(x, canvasM1.height); ctxM1.stroke();
+            }
+            for (let y = 0; y < canvasM1.height; y += 40) {
+                ctxM1.beginPath(); ctxM1.moveTo(0, y); ctxM1.lineTo(canvasM1.width, y); ctxM1.stroke();
+            }
+
+            // Draw distance line connecting masses
+            ctxM1.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+            ctxM1.setLineDash([4, 4]);
+            ctxM1.lineWidth = 2;
+            ctxM1.beginPath();
+            ctxM1.moveTo(m1State.x1, m1State.y1);
+            ctxM1.lineTo(m1State.x2, m1State.y2);
+            ctxM1.stroke();
+            ctxM1.setLineDash([]);
+
+            // Distance label r
+            ctxM1.fillStyle = '#f59e0b';
+            ctxM1.font = '12px Inter, sans-serif';
+            ctxM1.textAlign = 'center';
+            ctxM1.fillText(`r = ${m1State.r.toFixed(1)} m`, cx, cy - 15);
+
+            // Draw Force Vectors (Attraction arrows pointing inward)
+            const arrowLen = Math.min(120, Math.max(30, (m1State.m1 * m1State.m2) / (m1State.r * m1State.r) * 0.8));
+            
+            // Force on 1 (pointing right towards 2)
+            drawArrow(ctxM1, m1State.x1, m1State.y1 + 35, m1State.x1 + arrowLen, m1State.y1 + 35, '#6366f1', 'F\u2081\u2082');
+            // Force on 2 (pointing left towards 1)
+            drawArrow(ctxM1, m1State.x2, m1State.y2 + 35, m1State.x2 - arrowLen, m1State.y2 + 35, '#f43f5e', 'F\u2082\u2081');
+
+            // Draw Mass 1 Circle
+            const grad1 = ctxM1.createRadialGradient(m1State.x1 - 5, m1State.y1 - 5, 2, m1State.x1, m1State.y1, radius1);
+            grad1.addColorStop(0, '#93c5fd');
+            grad1.addColorStop(1, '#2563eb');
+            ctxM1.fillStyle = grad1;
+            ctxM1.beginPath();
+            ctxM1.arc(m1State.x1, m1State.y1, radius1, 0, Math.PI * 2);
+            ctxM1.fill();
+            ctxM1.lineWidth = 2;
+            ctxM1.strokeStyle = '#60a5fa';
+            ctxM1.stroke();
+
+            // Draw Mass 2 Circle
+            const grad2 = ctxM1.createRadialGradient(m1State.x2 - 5, m1State.y2 - 5, 2, m1State.x2, m1State.y2, radius2);
+            grad2.addColorStop(0, '#fca5a5');
+            grad2.addColorStop(1, '#e11d48');
+            ctxM1.fillStyle = grad2;
+            ctxM1.beginPath();
+            ctxM1.arc(m1State.x2, m1State.y2, radius2, 0, Math.PI * 2);
+            ctxM1.fill();
+            ctxM1.lineWidth = 2;
+            ctxM1.strokeStyle = '#fb7185';
+            ctxM1.stroke();
+
+            // Labels on spheres
+            ctxM1.fillStyle = '#ffffff';
+            ctxM1.font = 'bold 11px Inter, sans-serif';
+            ctxM1.textAlign = 'center';
+            ctxM1.fillText('m\u2081', m1State.x1, m1State.y1 + 4);
+            ctxM1.fillText('m\u2082', m1State.x2, m1State.y2 + 4);
+        }
+
+        function drawArrow(ctx, fromX, fromY, toX, toY, color, label) {
+            const headLength = 10;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
+            ctx.lineTo(toX, toY);
+            ctx.fill();
+
+            if (label) {
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.fillText(label, (fromX + toX) / 2, fromY - 8);
+            }
+        }
+
+        // Mouse interaction for Module 1
+        canvasM1.addEventListener('mousedown', (e) => {
+            const rect = canvasM1.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            if (Math.hypot(mx - m1State.x1, my - m1State.y1) < 40) m1State.dragging = 1;
+            else if (Math.hypot(mx - m1State.x2, my - m1State.y2) < 40) m1State.dragging = 2;
+        });
+
+        canvasM1.addEventListener('mousemove', (e) => {
+            if (!m1State.dragging) return;
+            const rect = canvasM1.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const cx = canvasM1.width / 2;
+            const diff = Math.abs(mx - cx) * 2 / 18;
+            const newDist = Math.max(2, Math.min(30, diff));
+            sliderDist.value = newDist;
+            updateM1FromUI();
+        });
+
+        window.addEventListener('mouseup', () => { m1State.dragging = null; });
+
+
+        // ================= MODULE 2: FREE FALL & VACUUM =================
+        const canvasM2 = document.getElementById('canvas-m2');
+        const ctxM2 = canvasM2.getContext('2d');
+        const canvasGraph = document.getElementById('canvas-graph');
+        const ctxGraph = canvasGraph.getContext('2d');
+
+        let dropState = {
+            object: 'hammer',
+            mass: 1.5,
+            cd: 0.47, // drag coefficient
+            area: 0.05, // area
+            env: 'earth',
+            g: 9.81,
+            airActive: true,
+            y: 0, // height in meters from floor (max 100m)
+            v: 0, // velocity m/s
+            t: 0, // time s
+            dropping: false,
+            landed: false,
+            history: [] // for graph
+        };
+
+        const objectPresets = {
+            feather: { name: 'Feather', mass: 0.01, cd: 1.2, area: 0.04, emoji: '🪶' },
+            hammer: { name: 'Steel Hammer', mass: 1.5, cd: 0.35, area: 0.02, emoji: '🔨' },
+            bowling: { name: 'Bowling Ball', mass: 5.0, cd: 0.47, area: 0.03, emoji: '🎳' },
+            astronaut: { name: 'Astronaut', mass: 80.0, cd: 1.0, area: 0.6, emoji: '👨‍🚀' }
+        };
+
+        function resizeCanvasM2() {
+            if (!canvasM2) return;
+            canvasM2.width = canvasM2.parentElement.clientWidth;
+            canvasM2.height = canvasM2.parentElement.clientHeight || 480;
+        }
+
+        function resizeCanvasGraph() {
+            if (!canvasGraph) return;
+            canvasGraph.width = canvasGraph.parentElement.clientWidth;
+            canvasGraph.height = canvasGraph.parentElement.clientHeight || 112;
+        }
+
+        function setDropObject(key) {
+            dropState.object = key;
+            const obj = objectPresets[key];
+            dropState.mass = obj.mass;
+            dropState.cd = obj.cd;
+            dropState.area = obj.area;
+            resetDrop();
+
+            // Highlight button UI
+            ['feather', 'hammer', 'bowling', 'astronaut'].forEach(k => {
+                const btn = document.getElementById(`obj-btn-${k}`);
+                if (k === key) {
+                    btn.className = "p-2.5 rounded-xl border border-indigo-500 bg-indigo-950/40 text-left transition-all flex items-center gap-2 group";
+                } else {
+                    btn.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-indigo-500/50 text-left transition-all flex items-center gap-2 group";
+                }
+            });
+        }
+
+        const envSelect = document.getElementById('env-select');
+        envSelect.addEventListener('change', (e) => {
+            dropState.env = e.target.value;
+            if (dropState.env === 'earth') dropState.g = 9.81;
+            else if (dropState.env === 'moon') dropState.g = 1.62;
+            else if (dropState.env === 'jupiter') dropState.g = 24.79;
+            else if (dropState.env === 'deepspace') dropState.g = 0.0;
+            resetDrop();
+        });
+
+        function toggleAirResistance() {
+            dropState.airActive = document.getElementById('toggle-air').checked;
+            const badge = document.getElementById('vacuum-badge');
+            if (dropState.airActive) {
+                badge.innerText = 'Atmosphere: ON';
+                badge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            } else {
+                badge.innerText = 'Vacuum: ON';
+                badge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            }
+        }
+
+        function dropObject() {
+            if (dropState.landed) resetDrop();
+            dropState.dropping = true;
+            document.getElementById('tele-status').innerText = 'Dropping...';
+            document.getElementById('tele-status').className = 'text-emerald-400 font-mono animate-pulse';
+        }
+
+        function resetDrop() {
+            dropState.y = 100; // 100 meters high
+            dropState.v = 0;
+            dropState.t = 0;
+            dropState.dropping = false;
+            dropState.landed = false;
+            dropState.history = [{ t: 0, v: 0 }];
+            document.getElementById('tele-status').innerText = 'Ready';
+            document.getElementById('tele-status').className = 'text-amber-400 font-mono';
+            document.getElementById('tele-time').innerText = '0.00 s';
+            document.getElementById('tele-height').innerText = '100.0 m';
+            document.getElementById('tele-vel').innerText = '0.0 m/s';
+        }
+
+        // Initialize drop height on load
+        dropState.y = 100;
+
+        function updateDropPhysics(dt) {
+            if (!dropState.dropping || dropState.landed) return;
+
+            // Air density rho = 1.2 kg/m^3 if airActive else 0
+            const rho = dropState.airActive ? 1.2 : 0.0;
+            // Drag force F_d = 0.5 * rho * v^2 * Cd * A
+            const drag = 0.5 * rho * dropState.v * Math.abs(dropState.v) * dropState.cd * dropState.area;
+            const accel = dropState.g - (drag / dropState.mass);
+
+            dropState.v += accel * dt;
+            dropState.y -= dropState.v * dt;
+            dropState.t += dt;
+
+            if (dropState.y <= 0) {
+                dropState.y = 0;
+                dropState.dropping = false;
+                dropState.landed = true;
+                document.getElementById('tele-status').innerText = 'Landed!';
+                document.getElementById('tele-status').className = 'text-indigo-400 font-mono';
+            }
+
+            // Record history
+            if (Math.random() < 0.3 || dropState.landed) {
+                dropState.history.push({ t: dropState.t, v: dropState.v });
+            }
+
+            document.getElementById('tele-time').innerText = dropState.t.toFixed(2) + ' s';
+            document.getElementById('tele-height').innerText = Math.max(0, dropState.y).toFixed(1) + ' m';
+            document.getElementById('tele-vel').innerText = dropState.v.toFixed(1) + ' m/s';
+        }
+
+        function drawModule2() {
+            if (currentModule !== 2) return;
+            ctxM2.clearRect(0, 0, canvasM2.width, canvasM2.height);
+
+            const w = canvasM2.width;
+            const h = canvasM2.height;
+
+            // Tower shaft area
+            const towerX = w / 2;
+            const floorY = h - 40;
+            const topY = 40;
+            const totalHeightMeters = 100;
+
+            // Draw background grid / scale markers
+            ctxM2.strokeStyle = 'rgba(51, 65, 85, 0.2)';
+            ctxM2.lineWidth = 1;
+            for (let m = 0; m <= 100; m += 20) {
+                const py = topY + (1 - m / totalHeightMeters) * (floorY - topY);
+                ctxM2.beginPath(); ctxM2.moveTo(towerX - 60, py); ctxM2.lineTo(towerX + 60, py); ctxM2.stroke();
+                ctxM2.fillStyle = 'rgba(148, 163, 184, 0.6)';
+                ctxM2.font = '10px Inter, sans-serif';
+                ctxM2.textAlign = 'right';
+                ctxM2.fillText(`${m}m`, towerX - 70, py + 4);
+            }
+
+            // Draw Floor
+            ctxM2.fillStyle = '#1e293b';
+            ctxM2.fillRect(towerX - 100, floorY, 200, 10);
+            ctxM2.strokeStyle = '#475569';
+            ctxM2.strokeRect(towerX - 100, floorY, 200, 10);
+
+            // Compute object pixel Y position
+            const objY = topY + (1 - dropState.y / totalHeightMeters) * (floorY - topY);
+
+            // Draw Object Icon
+            const obj = objectPresets[dropState.object];
+            ctxM2.font = '32px sans-serif';
+            ctxM2.textAlign = 'center';
+            ctxM2.textBaseline = 'middle';
+            ctxM2.fillText(obj.emoji, towerX, objY);
+
+            // Draw Graph Canvas
+            drawGraphCanvas();
+        }
+
+        function drawGraphCanvas() {
+            ctxGraph.clearRect(0, 0, canvasGraph.width, canvasGraph.height);
+            if (dropState.history.length < 2) return;
+
+            const gw = canvasGraph.width;
+            const gh = canvasGraph.height;
+
+            ctxGraph.strokeStyle = '#6366f1';
+            ctxGraph.lineWidth = 2;
+            ctxGraph.beginPath();
+
+            const maxT = Math.max(5, dropState.history[dropState.history.length - 1].t);
+            const maxV = Math.max(30, dropState.v * 1.2);
+
+            for (let i = 0; i < dropState.history.length; i++) {
+                const pt = dropState.history[i];
+                const px = (pt.t / maxT) * gw;
+                const py = gh - (pt.v / maxV) * (gh - 10);
+                if (i === 0) ctxGraph.moveTo(px, py);
+                else ctxGraph.lineTo(px, py);
+            }
+            ctxGraph.stroke();
+        }
+
+
+        // ================= MODULE 3: ORBITAL MECHANICS SANDBOX =================
+        const canvasM3 = document.getElementById('canvas-m3');
+        const ctxM3 = canvasM3.getContext('2d');
+
+        let orbitState = {
+            centralBody: { type: 'sun', mass: 10000, radius: 28, color: '#f59e0b' },
+            satellites: [
+                { x: 0, y: -140, vx: 5.5, vy: 0, mass: 1, radius: 6, color: '#38bdf8', trail: [] }
+            ],
+            paused: false,
+            speedMultiplier: 1.0,
+            launching: null // for click and drag velocity vector
+        };
+
+        function resizeCanvasM3() {
+            if (!canvasM3) return;
+            canvasM3.width = canvasM3.parentElement.clientWidth;
+            canvasM3.height = canvasM3.parentElement.clientHeight || 500;
+        }
+
+        function changeCentralBody() {
+            const type = document.getElementById('central-body-type').value;
+            if (type === 'sun') {
+                orbitState.centralBody = { type: 'sun', mass: 10000, radius: 28, color: '#f59e0b' };
+                document.getElementById('stat-mass').innerText = '1.0 \u00d7 10\u00b3\u2070 kg';
+            } else if (type === 'giant') {
+                orbitState.centralBody = { type: 'giant', mass: 25000, radius: 42, color: '#ef4444' };
+                document.getElementById('stat-mass').innerText = '2.5 \u00d7 10\u00b3\u2070 kg';
+            } else if (type === 'blackhole') {
+                orbitState.centralBody = { type: 'blackhole', mass: 50000, radius: 20, color: '#8b5cf6' };
+                document.getElementById('stat-mass').innerText = '5.0 \u00d7 10\u00b3\u2070 kg';
+            }
+        }
+
+        function loadOrbitPreset(preset) {
+            if (preset === 'circular') {
+                orbitState.satellites = [
+                    { x: 0, y: -150, vx: 5.8, vy: 0, mass: 1, radius: 6, color: '#38bdf8', trail: [] }
+                ];
+            } else if (preset === 'elliptical') {
+                orbitState.satellites = [
+                    { x: 0, y: -200, vx: 4.2, vy: 0, mass: 1, radius: 6, color: '#ec4899', trail: [] }
+                ];
+            } else if (preset === 'slingshot') {
+                orbitState.satellites = [
+                    { x: -220, y: -120, vx: 4.2, vy: 1.2, mass: 1, radius: 6, color: '#34d399', trail: [] }
+                ];
+            }
+            document.getElementById('satellite-count').innerText = `Satellites: ${orbitState.satellites.length}`;
+            document.getElementById('stat-sat-count').innerText = orbitState.satellites.length;
+        }
+
+        function toggleOrbitPlay() {
+            orbitState.paused = !orbitState.paused;
+            const btn = document.getElementById('btn-orbit-play');
+            const status = document.getElementById('orbit-sim-status');
+            if (orbitState.paused) {
+                btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Resume';
+                btn.className = 'px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5';
+                status.className = 'w-2 h-2 rounded-full bg-amber-400';
+            } else {
+                btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg> Pause';
+                btn.className = 'px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5';
+                status.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+            }
+        }
+
+        function clearOrbits() {
+            orbitState.satellites = [];
+            document.getElementById('satellite-count').innerText = 'Satellites: 0';
+            document.getElementById('stat-sat-count').innerText = 0;
+        }
+
+        function updateSimSpeed(val) {
+            orbitState.speedMultiplier = parseFloat(val);
+            document.getElementById('speed-val-label').innerText = parseFloat(val).toFixed(1) + 'x';
+        }
+
+        // Mouse click & drag to launch satellite
+        canvasM3.addEventListener('mousedown', (e) => {
+            const rect = canvasM3.getBoundingClientRect();
+            const cx = canvasM3.width / 2;
+            const cy = canvasM3.height / 2;
+            const x = e.clientX - rect.left - cx;
+            const y = e.clientY - rect.top - cy;
+            orbitState.launching = { startX: x, startY: y, currentX: x, currentY: y };
+        });
+
+        canvasM3.addEventListener('mousemove', (e) => {
+            if (!orbitState.launching) return;
+            const rect = canvasM3.getBoundingClientRect();
+            const cx = canvasM3.width / 2;
+            const cy = canvasM3.height / 2;
+            orbitState.launching.currentX = e.clientX - rect.left - cx;
+            orbitState.launching.currentY = e.clientY - rect.top - cy;
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!orbitState.launching) return;
+            const dx = orbitState.launching.currentX - orbitState.launching.startX;
+            const dy = orbitState.launching.currentY - orbitState.launching.startY;
+            
+            // Spawn new satellite with velocity proportional to drag vector
+            const colors = ['#38bdf8', '#34d399', '#f43f5e', '#a78bfa', '#fbbf24'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            orbitState.satellites.push({
+                x: orbitState.launching.startX,
+                y: orbitState.launching.startY,
+                vx: -dx * 0.05,
+                vy: -dy * 0.05,
+                mass: 1,
+                radius: 6,
+                color: color,
+                trail: []
+            });
+
+            orbitState.launching = null;
+            document.getElementById('satellite-count').innerText = `Satellites: ${orbitState.satellites.length}`;
+            document.getElementById('stat-sat-count').innerText = orbitState.satellites.length;
+        });
+
+        function updateOrbitPhysics() {
+            if (orbitState.paused) return;
+
+            const G = 1.0;
+            const M = orbitState.centralBody.mass;
+            const dt = 0.8 * orbitState.speedMultiplier;
+
+            for (let sat of orbitState.satellites) {
+                const distSq = sat.x * sat.x + sat.y * sat.y;
+                const dist = Math.sqrt(distSq);
+
+                if (dist < 15) continue; // Collision with central body
+
+                // Gravitational acceleration F = G * M / r^3 * r_vector
+                const accelFactor = (G * M) / (distSq * dist);
+                const ax = -accelFactor * sat.x;
+                const ay = -accelFactor * sat.y;
+
+                sat.vx += ax * dt;
+                sat.vy += ay * dt;
+
+                sat.x += sat.vx * dt;
+                sat.y += sat.vy * dt;
+
+                // Update trail history
+                if (Math.random() < 0.4) {
+                    sat.trail.push({ x: sat.x, y: sat.y });
+                    if (sat.trail.length > 80) sat.trail.shift();
+                }
+            }
+        }
+
+        function drawModule3() {
+            if (currentModule !== 3) return;
+            ctxM3.clearRect(0, 0, canvasM3.width, canvasM3.height);
+
+            const cx = canvasM3.width / 2;
+            const cy = canvasM3.height / 2;
+
+            // Draw grid background
+            ctxM3.strokeStyle = 'rgba(51, 65, 85, 0.15)';
+            ctxM3.lineWidth = 1;
+            for (let x = 0; x < canvasM3.width; x += 50) {
+                ctxM3.beginPath(); ctxM3.moveTo(x, 0); ctxM3.lineTo(x, canvasM3.height); ctxM3.stroke();
+            }
+            for (let y = 0; y < canvasM3.height; y += 50) {
+                ctxM3.beginPath(); ctxM3.moveTo(0, y); ctxM3.lineTo(canvasM3.width, y); ctxM3.stroke();
+            }
+
+            // Draw Central Body
+            const cb = orbitState.centralBody;
+            const grad = ctxM3.createRadialGradient(cx - 5, cy - 5, 2, cx, cy, cb.radius);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.3, cb.color);
+            grad.addColorStop(1, '#020617');
+
+            ctxM3.fillStyle = grad;
+            ctxM3.beginPath();
+            ctxM3.arc(cx, cy, cb.radius, 0, Math.PI * 2);
+            ctxM3.fill();
+
+            // Central glow
+            ctxM3.shadowColor = cb.color;
+            ctxM3.shadowBlur = 25;
+            ctxM3.strokeStyle = cb.color;
+            ctxM3.lineWidth = 2;
+            ctxM3.stroke();
+            ctxM3.shadowBlur = 0; // reset shadow
+
+            // Draw Satellites & Trails
+            for (let sat of orbitState.satellites) {
+                // Trail
+                if (sat.trail.length > 1) {
+                    ctxM3.beginPath();
+                    ctxM3.strokeStyle = sat.color;
+                    ctxM3.lineWidth = 1.5;
+                    for (let i = 0; i < sat.trail.length; i++) {
+                        const pt = sat.trail[i];
+                        if (i === 0) ctxM3.moveTo(cx + pt.x, cy + pt.y);
+                        else ctxM3.lineTo(cx + pt.x, cy + pt.y);
+                    }
+                    ctxM3.stroke();
+                }
+
+                // Satellite sphere
+                ctxM3.fillStyle = sat.color;
+                ctxM3.beginPath();
+                ctxM3.arc(cx + sat.x, cy + sat.y, sat.radius, 0, Math.PI * 2);
+                ctxM3.fill();
+            }
+
+            // Draw launch vector indicator if dragging
+            if (orbitState.launching) {
+                const l = orbitState.launching;
+                ctxM3.strokeStyle = '#f43f5e';
+                ctxM3.lineWidth = 2;
+                ctxM3.setLineDash([4, 4]);
+                ctxM3.beginPath();
+                ctxM3.moveTo(cx + l.startX, cy + l.startY);
+                ctxM3.lineTo(cx + l.currentX, cy + l.currentY);
+                ctxM3.stroke();
+                ctxM3.setLineDash([]);
+
+                // Spawn point preview circle
+                ctxM3.fillStyle = '#f43f5e';
+                ctxM3.beginPath();
+                ctxM3.arc(cx + l.startX, cy + l.startY, 6, 0, Math.PI * 2);
+                ctxM3.fill();
+            }
+        }
+
+
+        // ================= MAIN ANIMATION & UPDATE LOOP =================
+        let lastTime = performance.now();
+
+        function mainLoop(timestamp) {
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (currentModule === 1) {
+                drawModule1();
+            } else if (currentModule === 2) {
+                updateDropPhysics(dt > 0.1 ? 0.016 : dt);
+                drawModule2();
+            } else if (currentModule === 3) {
+                updateOrbitPhysics();
+                drawModule3();
+            }
+
+            requestAnimationFrame(mainLoop);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            resizeCanvasM1();
+            resizeCanvasM2();
+            resizeCanvasGraph();
+            resizeCanvasM3();
+            updateM1FromUI();
+            loadOrbitPreset('circular');
+            requestAnimationFrame(mainLoop);
+        };
+    </script>
+</body>
+</html>
